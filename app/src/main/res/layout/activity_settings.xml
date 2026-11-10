@@ -47,14 +47,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Guardar"
-            style="@style/Widget.MaterialButton.Button" />
+            style="@style/Widget.MaterialComponents.Button" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_back"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Volver"
-            style="@style/Widget.MaterialButton.TextButton"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_marginTop="16dp" />
 
     </LinearLayout>

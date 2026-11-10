@@ -50,7 +50,6 @@ class PoemNotificationReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_notification_overlay)
-            .setStyle(NotificationCompat.Style.INBOX_STYLE)
             .setContentTitle(title)
             .setContentText("$author\n$text.take(100)}...")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
