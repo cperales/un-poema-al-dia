@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebPoema</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: #fafafa;
+    color: #222;
+    display: flex;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+  }
+  .poem {
+    max-width: 48ch;
+  }
+  .author {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+    font-style: italic;
+  }
+  .title {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    font-weight: normal;
+  }
+  .text {
+    white-space: pre-line;
+    line-height: 1.8;
+    font-size: 1.05rem;
+    text-align: justify;
+  }
+  .settings-btn {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    background: #222;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+<div class="poem">
+  <div class="author" id="author"></div>
+  <h1 class="title" id="title"></h1>
+  <div class="text" id="text"></div>
+</div>
+<button class="settings-btn" id="settings">⚙</button>
+
+<script>
+(function() {
+  // Check if a specific poem was passed via notification
+  const params = new URLSearchParams(window.location.search);
+  const title = params.get('title');
+  const author = params.get('author');
+  const text = params.get('text');
+
+  if (title && author && text) {
+    document.getElementById('author').textContent = author;
+    document.getElementById('title').textContent = title;
+    document.getElementById('text').textContent = text;
+    return;
+  }
+
+  // Otherwise load poems from bundled JSON
+  fetch('poems.json')
+    .then(r => r.json())
+    .then(poems => {
+      const poem = poems[Math.floor(Math.random() * poems.length)];
+      document.getElementById('author').textContent = poem.author;
+      document.getElementById('title').textContent = poem.title;
+      document.getElementById('text').textContent = poem.text;
+    })
+    .catch(() => {
+      document.getElementById('text').textContent = 'No se pudieron cargar los poemas.';
+    });
+})();
+</script>
+</body>
+</html>

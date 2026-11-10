@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Notificaciones"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp" />
+
+        <RadioGroup
+            android:id="@+id/frequency_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp">
+
+            <RadioButton
+                android:id="@+id/freq_daily"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cada mañana" />
+
+            <RadioButton
+                android:id="@+id/freq_weekly"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cada semana" />
+
+            <RadioButton
+                android:id="@+id/freq_never"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nunca" />
+        </RadioGroup>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Guardar"
+            style="@style/Widget.MaterialButton.Button" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_back"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Volver"
+            style="@style/Widget.MaterialButton.TextButton"
+            android:layout_marginTop="16dp" />
+
+    </LinearLayout>
+</ScrollView>
