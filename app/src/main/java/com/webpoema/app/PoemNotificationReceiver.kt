@@ -51,7 +51,7 @@ class PoemNotificationReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_notification_overlay)
             .setContentTitle(title)
-            .setContentText("$author\n$text.take(100)}...")
+            .setContentText("${author}\n${text.take(100)}...")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingOpen)
             .setAutoCancel(true)
