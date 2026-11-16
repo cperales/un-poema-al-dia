@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
+        android:name=".WebPoemaApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="WebPoema"
@@ -20,6 +21,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
 
         <receiver
             android:name=".PoemNotificationReceiver"

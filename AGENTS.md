@@ -35,9 +35,14 @@ Android app that displays poems in a WebView with scheduled notifications.
 ```bash
 # Build (requires Android SDK/NDK)
 ./gradlew assembleDebug
+
+# On this machine use JDK 17 (Gradle 8.7 cannot run on the default Java 25) and the system SDK
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_HOME=/usr/lib/android-sdk ./gradlew installDebug
 ```
 
 - **App**: `app/` — Android app built with Kotlin + Gradle
 - **Poems**: `app/src/main/assets/poems.json` — bundled poems (auto-generated from `Poemas/`)
-- **Features**: WebView display, daily/weekly/never notification settings
+- **Features**: WebView display, "Ajustes" screen (⚙ button) with notification frequency (daily/weekly/never) and theme (Claro/Oscuro; follows the system until chosen)
+- **WebView**: the page is served by `WebViewAssetLoader` from `https://appassets.androidplatform.net/assets/`, not `file://` (otherwise `fetch('poems.json')` fails)
+- **Dark theme**: `res/values-night/themes.xml` (native screens) and `prefers-color-scheme` CSS in `assets/index.html` and `app.py` (keep both in sync)
 - **Run**: `./gradlew installDebug` (requires connected device)

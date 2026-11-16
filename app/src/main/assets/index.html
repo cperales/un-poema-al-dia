@@ -50,6 +50,11 @@
     align-items: center;
     justify-content: center;
   }
+  @media (prefers-color-scheme: dark) {
+    body { background: #000; color: #fff; }
+    .author { color: #aaa; }
+    .settings-btn { background: #fff; color: #000; }
+  }
 </style>
 </head>
 <body>
@@ -61,6 +66,10 @@
 <button class="settings-btn" id="settings">⚙</button>
 
 <script>
+document.getElementById('settings').addEventListener('click', function() {
+  if (window.Android && window.Android.openSettings) window.Android.openSettings();
+});
+
 (function() {
   // Check if a specific poem was passed via notification
   const params = new URLSearchParams(window.location.search);

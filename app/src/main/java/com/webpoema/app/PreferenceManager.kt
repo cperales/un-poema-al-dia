@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 object PreferenceManager {
     private const val PREFS = "webpoema_prefs"
     private const val KEY_FREQ = "frequency"
+    private const val KEY_THEME = "theme"
 
     private fun prefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -17,5 +18,14 @@ object PreferenceManager {
 
     fun setFrequency(context: Context, freq: String) {
         prefs(context).edit().putString(KEY_FREQ, freq).apply()
+    }
+
+    /** "light", "dark", or null if the user never chose (follow the system). */
+    fun getTheme(context: Context): String? {
+        return prefs(context).getString(KEY_THEME, null)
+    }
+
+    fun setTheme(context: Context, theme: String) {
+        prefs(context).edit().putString(KEY_THEME, theme).apply()
     }
 }

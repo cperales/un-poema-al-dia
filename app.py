@@ -95,6 +95,10 @@ def render_poem(author, title, text):
     font-size: 1.05rem;
     text-align: justify;
   }}
+  @media (prefers-color-scheme: dark) {{
+    body {{ background: #000; color: #fff; }}
+    .author {{ color: #aaa; }}
+  }}
 </style>
 </head>
 <body>
