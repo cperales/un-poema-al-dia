@@ -41,8 +41,18 @@ JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_HOME=/usr/lib/android-sdk .
 ```
 
 - **App**: `app/` — Android app built with Kotlin + Gradle
-- **Poems**: `app/src/main/assets/poems.json` — bundled poems (auto-generated from `Poemas/`)
+- **Poems**: `app/src/main/assets/poems.json` — bundled poems (auto-generated from `Poemas/`), used as offline fallback
 - **Features**: WebView display, "Ajustes" screen (⚙ button) with notification frequency (daily/weekly/never) and theme (Claro/Oscuro; follows the system until chosen)
 - **WebView**: the page is served by `WebViewAssetLoader` from `https://appassets.androidplatform.net/assets/`, not `file://` (otherwise `fetch('poems.json')` fails)
 - **Dark theme**: `res/values-night/themes.xml` (native screens) and `prefers-color-scheme` CSS in `assets/index.html` and `app.py` (keep both in sync)
 - **Run**: `./gradlew installDebug` (requires connected device)
+
+## Infra (`infra/`)
+
+AWS CDK (Python) stack that publishes one shared "poem of the day" as `today.json`
+(Lambda + EventBridge Scheduler at 00:05 Europe/Madrid, public-read `today.json`
+only). See `infra/README.md`.
+
+- Deploy with the `personal` AWS profile (us-east-1): `cdk deploy -c poemsBucket=<name>` from `infra/`. Deploys will eventually run from GitHub Actions, so keep account/region environment-driven (no hardcoded profile or account).
+- Lambda code is `infra/lambda/poem_of_the_day.py` (boto3 only); tests: `python -m unittest discover infra/tests`.
+- `today.json` contract: `{date, id, title, author, text}`. Clients (`app.py`, Android app) fetch it and fall back to local poems.
