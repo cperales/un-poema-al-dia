@@ -1,17 +1,31 @@
 #!/usr/bin/env python3
-"""Simple server that shows a random poem from the Poemas/ folder on each page load."""
+"""Simple server that shows the shared poem of the day, falling back to a random poem from Poemas/."""
 
 import argparse
 import glob
+import json
 import os
 import random
-import re
+import sys
+import time
+import urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 
 # Resolve paths relative to this script's directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 POEM_DIR = os.path.join(BASE_DIR, "Poemas")
+
+# Shared "poem of the day" published by the infra/ CDK stack (TodayUrl output).
+# Override with WEBPOEMA_TODAY_URL when deploying against another bucket.
+TODAY_URL = os.environ.get(
+    "WEBPOEMA_TODAY_URL",
+    "https://poemoftheday-outb8d7ccdd-gydlpcby3qdo.s3.us-east-1.amazonaws.com/today.json",
+)
+TODAY_TTL_SECONDS = 60
+TODAY_TIMEOUT_SECONDS = 5
+
+_today_cache = {"fetched_at": 0.0, "poem": None}
 
 
 def find_poems():
@@ -35,6 +49,41 @@ def read_poem(path):
         return f.read()
 
 
+def fetch_today_poem():
+    """Return the shared poem of the day, or None if it is unavailable.
+
+    Successful responses (and failures, briefly) are cached to avoid hitting S3
+    on every page load. Network errors never break the site: the caller falls
+    back to the local Poemas/ collection.
+    """
+    now = time.monotonic()
+    if now - _today_cache["fetched_at"] < TODAY_TTL_SECONDS:
+        return _today_cache["poem"]
+
+    try:
+        request = urllib.request.Request(
+            TODAY_URL,
+            headers={"Accept": "application/json", "Cache-Control": "no-cache"},
+        )
+        with urllib.request.urlopen(request, timeout=TODAY_TIMEOUT_SECONDS) as response:
+            data = json.load(response)
+
+        poem = {
+            "title": str(data["title"]),
+            "author": str(data["author"]),
+            "text": str(data["text"]),
+        }
+        if not poem["title"].strip() or not poem["text"].strip():
+            raise ValueError("today.json has an empty title or text")
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        print(f"Could not fetch {TODAY_URL}: {exc}", file=sys.stderr)
+        _today_cache.update(fetched_at=now, poem=None)
+        return None
+
+    _today_cache.update(fetched_at=now, poem=poem)
+    return poem
+
+
 # Preload poems list so we can pick randomly
 POEMS = find_poems()
 
@@ -42,10 +91,18 @@ POEMS = find_poems()
 class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/":
-            # Pick a random poem
-            poem = random.choice(POEMS)
-            text = read_poem(poem["path"])
-            html = render_poem(poem["author"], poem["title"], text)
+            poem = fetch_today_poem()
+            if poem is None and POEMS:
+                local = random.choice(POEMS)
+                poem = {
+                    "author": local["author"],
+                    "title": local["title"],
+                    "text": read_poem(local["path"]),
+                }
+            if poem is None:
+                self.send_error(503, "No poem available")
+                return
+            html = render_poem(poem["author"], poem["title"], poem["text"])
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()
@@ -117,6 +174,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     os.chdir(BASE_DIR)
-    print(f"Serving {len(POEMS)} poems from {POEM_DIR}")
+    print(f"Serving {len(POEMS)} local poems from {POEM_DIR}")
+    print(f"Poem of the day: {TODAY_URL}")
     print(f"Open http://localhost:{args.port}")
     HTTPServer(("0.0.0.0", args.port), Handler).serve_forever()

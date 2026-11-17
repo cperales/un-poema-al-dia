@@ -7,6 +7,7 @@ object PreferenceManager {
     private const val PREFS = "webpoema_prefs"
     private const val KEY_FREQ = "frequency"
     private const val KEY_THEME = "theme"
+    private const val KEY_CACHED_TODAY = "cached_today_json"
 
     private fun prefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -27,5 +28,14 @@ object PreferenceManager {
 
     fun setTheme(context: Context, theme: String) {
         prefs(context).edit().putString(KEY_THEME, theme).apply()
+    }
+
+    /** Last successful today.json response, kept for offline notifications. */
+    fun getCachedTodayJson(context: Context): String? {
+        return prefs(context).getString(KEY_CACHED_TODAY, null)
+    }
+
+    fun setCachedTodayJson(context: Context, json: String) {
+        prefs(context).edit().putString(KEY_CACHED_TODAY, json).apply()
     }
 }

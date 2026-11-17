@@ -13,6 +13,16 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+
+        // Shared "poem of the day" published by the CDK stack. Override with
+        // -PtodayJsonUrl=... (e.g. after deploying to another account/region).
+        val todayJsonUrl = (project.findProperty("todayJsonUrl") as String?)
+            ?: "https://poemoftheday-outb8d7ccdd-gydlpcby3qdo.s3.us-east-1.amazonaws.com/today.json"
+        buildConfigField("String", "TODAY_JSON_URL", "\"$todayJsonUrl\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {

@@ -66,6 +66,22 @@
 <button class="settings-btn" id="settings">⚙</button>
 
 <script>
+let externalPoem = false;
+
+function renderPoem(poem) {
+  if (!poem) return;
+  document.getElementById('author').textContent = poem.author || '';
+  document.getElementById('title').textContent = poem.title || '';
+  document.getElementById('text').textContent = poem.text || '';
+}
+
+// Called from MainActivity with the shared poem of the day (or the poem the
+// notification showed). It wins over the bundled fallback below.
+window.showPoem = function(poem) {
+  externalPoem = true;
+  renderPoem(poem);
+};
+
 document.getElementById('settings').addEventListener('click', function() {
   if (window.Android && window.Android.openSettings) window.Android.openSettings();
 });
@@ -77,24 +93,24 @@ document.getElementById('settings').addEventListener('click', function() {
   const author = params.get('author');
   const text = params.get('text');
 
-  if (title && author && text) {
-    document.getElementById('author').textContent = author;
-    document.getElementById('title').textContent = title;
-    document.getElementById('text').textContent = text;
+  if (title && text) {
+    window.showPoem({ author: author || '', title: title, text: text });
     return;
   }
 
-  // Otherwise load poems from bundled JSON
+  // Show a bundled poem immediately; MainActivity replaces it with the poem
+  // of the day once today.json has been fetched.
   fetch('poems.json')
     .then(r => r.json())
     .then(poems => {
-      const poem = poems[Math.floor(Math.random() * poems.length)];
-      document.getElementById('author').textContent = poem.author;
-      document.getElementById('title').textContent = poem.title;
-      document.getElementById('text').textContent = poem.text;
+      if (!externalPoem && poems.length) {
+        renderPoem(poems[Math.floor(Math.random() * poems.length)]);
+      }
     })
     .catch(() => {
-      document.getElementById('text').textContent = 'No se pudieron cargar los poemas.';
+      if (!externalPoem) {
+        document.getElementById('text').textContent = 'No se pudieron cargar los poemas.';
+      }
     });
 })();
 </script>

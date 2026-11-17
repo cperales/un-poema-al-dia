@@ -1,15 +1,26 @@
 package com.webpoema.app
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.widget.RadioGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var frequencyGroup: RadioGroup
     private lateinit var themeGroup: RadioGroup
+
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            NotificationScheduler.schedule(this, PreferenceManager.getFrequency(this))
+            finish()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +58,12 @@ class SettingsActivity : AppCompatActivity() {
             val newTheme = if (themeGroup.checkedRadioButtonId == R.id.theme_dark) "dark" else "light"
             PreferenceManager.setTheme(this, newTheme)
             WebPoemaApp.applyTheme(newTheme)
-            finish()
+
+            if (freq != "never" && needsNotificationPermission()) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                finish()
+            }
         }
 
         // Back button
@@ -55,4 +71,9 @@ class SettingsActivity : AppCompatActivity() {
             finish()
         }
     }
+
+    private fun needsNotificationPermission(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
 }

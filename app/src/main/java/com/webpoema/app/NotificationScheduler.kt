@@ -5,56 +5,57 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.provider.Settings
-import androidx.core.content.ContextCompat
+import java.time.DayOfWeek
+import java.time.ZonedDateTime
 
 object NotificationScheduler {
 
-    private const val DAILY_INTENT = "com.webpoema.app.DAILY"
-    private const val WEEKLY_INTENT = "com.webpoema.app.WEEKLY"
+    const val ACTION_SHOW_POEM = "com.webpoema.app.ACTION_SHOW_POEM"
+    const val NOTIFICATION_HOUR = 9
 
+    private const val REQUEST_CODE = 0
+
+    /**
+     * (Re)schedules the next poem notification at 09:00 local time.
+     *
+     * The poem is resolved when the alarm fires, not here, so the notification
+     * always shows that day's poem instead of one frozen at save time.
+     */
     fun schedule(context: Context, frequency: String) {
         cancel(context)
-
         if (frequency == "never") return
 
-        val poem = PoemLoader.getRandomPoem(context)
-
-        val intent = Intent(context, PoemNotificationReceiver::class.java).apply {
-            action = "com.webpoema.app.ACTION_SHOW_POEM"
-            putExtra("title", poem.title)
-            putExtra("author", poem.author)
-            putExtra("text", poem.text)
-        }
-
         val pendingIntent = PendingIntent.getBroadcast(
-            context, 0, intent,
+            context,
+            REQUEST_CODE,
+            alarmIntent(context),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val triggerAtMillis = nextTrigger(frequency)
 
-        // Check if exact alarm permission is granted
         val canScheduleExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             alarmManager.canScheduleExactAlarms()
         } else {
             true
         }
 
-        if (!canScheduleExact) {
-            // Request permission
-            val intentExact = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-            context.startActivity(intentExact)
-        }
-
-        val triggerAtMillis = System.currentTimeMillis() + getMillis(frequency)
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
-                pendingIntent
-            )
+            if (canScheduleExact) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMillis,
+                    pendingIntent
+                )
+            } else {
+                // Best effort when the exact-alarm permission is not granted.
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAtMillis,
+                    pendingIntent
+                )
+            }
         } else {
             alarmManager.setExact(
                 AlarmManager.RTC_WAKEUP,
@@ -65,20 +66,33 @@ object NotificationScheduler {
     }
 
     fun cancel(context: Context) {
-        val intent = Intent(context, PoemNotificationReceiver::class.java)
         val pending = PendingIntent.getBroadcast(
-            context, 0, intent,
+            context,
+            REQUEST_CODE,
+            alarmIntent(context),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         alarmManager.cancel(pending)
     }
 
-    private fun getMillis(freq: String): Long {
-        return when (freq) {
-            "daily" -> AlarmManager.INTERVAL_DAY
-            "weekly" -> AlarmManager.INTERVAL_DAY * 7
-            else -> 0
+    /** Next 09:00 local time; "weekly" waits for the next Sunday at 09:00. */
+    fun nextTrigger(frequency: String, now: ZonedDateTime = ZonedDateTime.now()): Long {
+        var next = now
+            .withHour(NOTIFICATION_HOUR)
+            .withMinute(0)
+            .withSecond(0)
+            .withNano(0)
+        if (!next.isAfter(now)) next = next.plusDays(1)
+
+        if (frequency == "weekly") {
+            while (next.dayOfWeek != DayOfWeek.SUNDAY) next = next.plusDays(1)
         }
+        return next.toInstant().toEpochMilli()
     }
+
+    private fun alarmIntent(context: Context): Intent =
+        Intent(context, PoemNotificationReceiver::class.java).apply {
+            action = ACTION_SHOW_POEM
+        }
 }

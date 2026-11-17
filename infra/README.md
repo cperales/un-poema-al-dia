@@ -22,6 +22,21 @@ poems bucket (private, *.md under POEMS_PREFIX) ---^
 - If a run fails, the previous `today.json` stays. Runs are idempotent: a
   second run on the same day changes nothing.
 
+## Clients
+
+Both clients read `today.json` and fall back to local poems when it is
+unreachable:
+
+- **Web server (`app.py`)**: fetched per request with a 60 s cache; override the
+  URL with `WEBPOEMA_TODAY_URL`.
+- **Android app**: fetched at launch and when a notification fires, cached for
+  offline use; the URL comes from `todayJsonUrl` in `gradle.properties`
+  (`-PtodayJsonUrl=...` overrides it), and `app/src/main/assets/poems.json` is
+  the final fallback.
+
+Deploying to another account/region? Copy the `TodayUrl` output into both
+settings.
+
 ## Deploy
 
 Locally (profile `personal`, us-east-1; the account is already CDK-bootstrapped):

@@ -7,18 +7,35 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.provider.Settings
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 
 class PoemNotificationReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val title = intent.getStringExtra("title") ?: "WebPoema"
-        val author = intent.getStringExtra("author") ?: ""
-        val text = intent.getStringExtra("text") ?: ""
+        // Fetching today.json needs the network, and onReceive runs on the main
+        // thread; goAsync() lets us finish in a worker without blocking the UI.
+        val pendingResult = goAsync()
+        val appContext = context.applicationContext
 
-        showNotification(context, title, author, text)
+        TodayRepository.executor.execute {
+            try {
+                val poem = TodayRepository.getBlocking(appContext)
+                showNotification(appContext, poem.title, poem.author, poem.text)
+
+                // Alarms are one-shot: schedule the next one (daily/weekly).
+                val frequency = PreferenceManager.getFrequency(appContext)
+                if (frequency != "never") {
+                    NotificationScheduler.schedule(appContext, frequency)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not show the poem notification", e)
+            } finally {
+                pendingResult.finish()
+            }
+        }
     }
 
     private fun showNotification(context: Context, title: String, author: String, text: String) {
@@ -51,13 +68,23 @@ class PoemNotificationReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_notification_overlay)
             .setContentTitle(title)
-            .setContentText("${author}\n${text.take(100)}...")
+            .setContentText("$author\n${text.take(100)}...")
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingOpen)
             .setAutoCancel(true)
             .build()
 
         val manager = ContextCompat.getSystemService(context, NotificationManager::class.java)
-        manager?.notify(0, notification)
+        if (manager != null && NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+            manager.notify(NOTIFICATION_ID, notification)
+        } else {
+            Log.w(TAG, "Notifications are disabled; skipping the poem notification")
+        }
+    }
+
+    private companion object {
+        const val TAG = "PoemNotification"
+        const val NOTIFICATION_ID = 0
     }
 }
