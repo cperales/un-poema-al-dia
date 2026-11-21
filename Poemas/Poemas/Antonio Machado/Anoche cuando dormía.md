@@ -3,10 +3,10 @@ soñé, ¡bendita ilusión!,
 que una fontana fluía  
 dentro de mi corazón.
 
-Di, ¿por qué acequia escondida,  
+Di: ¿por qué acequia escondida,  
 agua, vienes hasta mí,  
 manantial de nueva vida  
-de donde nunca bebí?
+en donde nunca bebí?
 
 Anoche cuando dormía  
 soñé, ¡bendita ilusión!,  
@@ -15,12 +15,12 @@ dentro de mi corazón;
 
 y las doradas abejas  
 iban fabricando en él,  
-con las amarguras viejas  
+con las amarguras viejas,  
 blanca cera y dulce miel.
 
 Anoche cuando dormía  
 soñé, ¡bendita ilusión!,  
-que un ardiente sol lucía  
+que un sol ardiente lucía  
 dentro de mi corazón.
 
 Era ardiente porque daba  

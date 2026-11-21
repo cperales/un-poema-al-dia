@@ -12,12 +12,12 @@ chopos de la carretera
 y del río. El Duero corre, terso y mudo, mansamente.  
 El campo parece, más que joven, adolescente.
 
-Entre las hierbas, alguna humilde flor ha nacido,  
+Entre las hierbas alguna humilde flor ha nacido,  
 azul o blanca. ¡Belleza del campo apenas florido,  
 y mística primavera!
 
 ¡Chopos del camino blanco, álamos de la ribera,  
 espuma de la montaña  
-ante la azul lejanía;  
+ante la azul lejanía,  
 sol del día, claro día!  
 ¡Hermosa tierra de España!

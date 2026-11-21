@@ -5,7 +5,7 @@ mi historia, algunos casos que recordar no quiero.
 
 Ni un seductor Mañara ni un Bradomín he sido  
 —ya conocéis mi torpe aliño indumentario—;  
-mas recibí la flecha que me asignò Cupido  
+mas recibí la flecha que me asignó Cupido  
 y amé cuanto ellas pueden tener de hospitalario.
 
 Hay en mis venas gotas de sangre jacobina,  
@@ -31,11 +31,11 @@ no por el docto oficio del forjador preciada.
 Converso con el hombre que siempre va conmigo  
 —quien habla solo espera hablar a Dios un día—;  
 mi soliloquio es plática con este buen amigo  
-que me enseñò el secreto de la filantropía.
+que me enseñó el secreto de la filantropía.
 
 Y al cabo, nada os debo; debéisme cuanto he escrito.  
 A mi trabajo acudo, con mi dinero pago  
-el traje que me cubre y la mansiòn que habitò,  
+el traje que me cubre y la mansión que habito,  
 el pan que me alimenta y el lecho en donde yago.
 
 Y cuando llegue el día del último viaje  

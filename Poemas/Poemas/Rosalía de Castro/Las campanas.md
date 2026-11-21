@@ -1,7 +1,7 @@
 Yo las amo, yo las oigo,  
 cual oigo el rumor del viento,  
 el murmurar de la fuente  
-o el balido de cordero.  
+o el balido del cordero.  
   
 Como los pájaros, ellas,  
 tan pronto asoma en los cielos  
@@ -15,5 +15,5 @@ de apacible y de halagüeño.
   
 Si por siempre enmudecieran,  
 ¡qué tristeza en el aire y el cielo!  
-¡Qué silencio en la iglesia!  
+¡Qué silencio en las iglesias!  
 ¡Qué extrañeza entre los muertos!
