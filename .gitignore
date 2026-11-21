@@ -24,3 +24,6 @@ Thumbs.db
 
 # Gradle
 .gradle/
+
+# Planes internos y poemas con derechos (no se publican)
+plans/
