@@ -37,16 +37,23 @@ settings and publish a new APK.
 
 ## Deploy
 
-Locally (profile `personal`, us-east-1; the account is already CDK-bootstrapped):
+Locally (profile `personal`, eu-west-3 Paris; the account is already CDK-bootstrapped there):
 
 ```bash
 cd infra
 uv venv && uv pip install -r requirements.txt
-export AWS_PROFILE=personal CDK_DEFAULT_REGION=us-east-1
-export CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
-cdk diff   -c poemsBucket=<bucket with the .md poems>
-cdk deploy -c poemsBucket=<bucket with the .md poems>
+export AWS_PROFILE=personal AWS_REGION=eu-west-3
+cdk diff   -c poemsBucket=webpoema-140874247434-eu-west-3
+cdk deploy -c poemsBucket=webpoema-140874247434-eu-west-3
 ```
+
+Set the region with **`AWS_REGION`**, not only `CDK_DEFAULT_REGION`: the `cdk` CLI
+overwrites `CDK_DEFAULT_REGION` (and `CDK_DEFAULT_ACCOUNT`) with the profile's own
+region before running `app.py`, so a stale `CDK_DEFAULT_REGION` silently targets the
+profile's default region. Always check that `cdk diff` shows the region you expect.
+
+Current deployment: poems bucket `webpoema-140874247434-eu-west-3` (private),
+`TodayUrl` = `https://poemoftheday-outb8d7ccdd-tcmrg2fvcp9b.s3.eu-west-3.amazonaws.com/today.json`.
 
 `poemsPrefix` (set to `Poemas/` in `cdk.json`) is the key prefix of the poems;
 override it with `-c poemsPrefix=...`. Account and region come from the environment, so the
@@ -58,11 +65,11 @@ Actions. The installed `cdk` CLI must be at least as new as `aws-cdk-lib`
 
 ```bash
 # run now (no-op if today already has a poem); add {"force": true} to re-pick
-aws lambda invoke --profile personal --function-name <FunctionName output> \
+aws lambda invoke --profile personal --region eu-west-3 --function-name <FunctionName output> \
   --cli-binary-format raw-in-base64-out --payload '{"force": true}' /dev/stdout
 
 # choose a specific poem for today: upload your own today.json
-aws s3 cp today.json s3://<out bucket>/today.json --profile personal \
+aws s3 cp today.json s3://<out bucket>/today.json --profile personal --region eu-west-3 \
   --content-type 'application/json; charset=utf-8' --cache-control 'public, max-age=300'
 ```
 

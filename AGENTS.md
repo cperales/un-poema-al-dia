@@ -27,7 +27,7 @@ AWS CDK (Python) stack that publishes one shared "poem of the day" as `today.jso
 (Lambda + EventBridge Scheduler at 00:05 Europe/Madrid, public-read `today.json`
 only). See `infra/README.md`.
 
-- Deploy with the `personal` AWS profile (us-east-1): `cdk deploy -c poemsBucket=<name>` from `infra/`. Deploys will eventually run from GitHub Actions, so keep account/region environment-driven (no hardcoded profile or account).
+- Deploy with the `personal` AWS profile in eu-west-3: `AWS_PROFILE=personal AWS_REGION=eu-west-3 cdk deploy -c poemsBucket=webpoema-140874247434-eu-west-3` from `infra/`. Use `AWS_REGION`: the cdk CLI overwrites `CDK_DEFAULT_REGION` with the profile's region. Never use the `licico` profile (another account). Deploys will eventually run from GitHub Actions, so keep account/region environment-driven (no hardcoded profile or account).
 - Python env is managed with `uv` (`cd infra && uv venv && uv pip install -r requirements.txt`).
 - Lambda code is `infra/lambda/poem_of_the_day.py` (boto3 only); tests: `python -m unittest discover infra/tests`.
 - `today.json` contract: `{date, id, title, author, text}`. If the `TodayUrl` changes, update `TODAY_URL` in `web/app.js` and `todayJsonUrl` on branch `app`.

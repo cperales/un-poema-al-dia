@@ -2,7 +2,7 @@
 // TODAY_URL is the stack's TodayUrl output: update it (and the Android app's
 // todayJsonUrl on branch `app`) if the stack moves to another bucket/region.
 const TODAY_URL =
-  'https://poemoftheday-outb8d7ccdd-gydlpcby3qdo.s3.us-east-1.amazonaws.com/today.json';
+  'https://poemoftheday-outb8d7ccdd-tcmrg2fvcp9b.s3.eu-west-3.amazonaws.com/today.json';
 
 const ERROR_TEXT = 'No se pudo cargar el poema de hoy.';
 
