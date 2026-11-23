@@ -11,8 +11,9 @@ android {
         applicationId = "com.webpoema.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        // CI passes -PversionCode=<run number> -PversionName=<tag without "v">.
+        versionCode = (project.findProperty("versionCode") as String?)?.toInt() ?: 1
+        versionName = (project.findProperty("versionName") as String?) ?: "1.0"
 
         // Shared "poem of the day" published by the CDK stack. Override with
         // -PtodayJsonUrl=... (e.g. after deploying to another account/region).
@@ -25,9 +26,25 @@ android {
         buildConfig = true
     }
 
+    // Release signing comes from the environment (GitHub Actions secrets, see
+    // .github/workflows/release.yml). Without it, assembleRelease still builds,
+    // but the APK is unsigned and cannot be installed.
+    val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+    val releaseSigning = if (!keystorePath.isNullOrBlank()) {
+        signingConfigs.create("release") {
+            storeFile = file(keystorePath)
+            storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+            keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+        }
+    } else {
+        null
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = releaseSigning
         }
     }
 

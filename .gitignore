@@ -1,13 +1,9 @@
-# Python
-.venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.so
-*.egg-info/
-dist/
+# Gradle / Android
+.gradle/
 build/
+local.properties
+*.jks
+*.keystore
 
 # IDE
 .vscode/
@@ -19,9 +15,13 @@ build/
 .DS_Store
 Thumbs.db
 
-# Webpoem
+# Local leftovers from the `pages` branch (web/, infra/ venv and cdk.out)
+.venv/
+__pycache__/
 .webpoem/
+infra/
 
-# Gradle / Android
-.gradle/
-local.properties
+# Planes internos y copias locales de los poemas (viven en S3, no se publican)
+plans/
+Poemas/
+s3-poemas/

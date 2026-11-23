@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private var pageReady = false
-    private var pendingPoem: Poem? = null
+    private var pendingScript: String? = null
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* handled by the system */ }
@@ -36,8 +36,8 @@ class MainActivity : AppCompatActivity() {
             WebView.setWebContentsDebuggingEnabled(true)
         }
 
-        // Serve assets over https://appassets.androidplatform.net/ so that
-        // fetch('poems.json') works (it is blocked on file:// URLs).
+        // Serve assets over https://appassets.androidplatform.net/ instead of
+        // file://, which WebView restricts (fetch() and other requests fail).
         val assetLoader = WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
             .build()
@@ -54,9 +54,9 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPageFinished(view: WebView, url: String) {
                 pageReady = true
-                pendingPoem?.let {
-                    pendingPoem = null
-                    injectPoem(it)
+                pendingScript?.let {
+                    pendingScript = null
+                    webView.evaluateJavascript(it, null)
                 }
             }
         }
@@ -73,7 +73,8 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * The notification carries the poem it showed; otherwise load the shared
-     * poem of the day. The WebView already displays a bundled poem meanwhile.
+     * poem of the day (network, then cache). The page shows «Cargando…»
+     * meanwhile, and an error message if there is no poem at all.
      */
     private fun showPoemForIntent(intent: Intent?) {
         val title = intent?.getStringExtra("title")
@@ -91,28 +92,34 @@ class MainActivity : AppCompatActivity() {
         }
 
         TodayRepository.executor.execute {
-            val poem = TodayRepository.fetchBlocking(applicationContext) ?: return@execute
+            val poem = TodayRepository.fetchBlocking(applicationContext)
             runOnUiThread {
-                if (!isFinishing && !isDestroyed) displayPoem(poem)
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                if (poem != null) displayPoem(poem) else displayError()
             }
         }
     }
 
     private fun displayPoem(poem: Poem) {
-        if (pageReady) {
-            injectPoem(poem)
-        } else {
-            pendingPoem = poem
-        }
-    }
-
-    private fun injectPoem(poem: Poem) {
         val json = JSONObject().apply {
             put("title", poem.title)
             put("author", poem.author)
             put("text", poem.text)
         }
-        webView.evaluateJavascript("window.showPoem && window.showPoem(($json));", null)
+        runInPage("window.showPoem && window.showPoem(($json));")
+    }
+
+    private fun displayError() {
+        runInPage("window.showError && window.showError();")
+    }
+
+    /** Runs [script] now, or once the page has loaded (the latest call wins). */
+    private fun runInPage(script: String) {
+        if (pageReady) {
+            webView.evaluateJavascript(script, null)
+        } else {
+            pendingScript = script
+        }
     }
 
     private fun requestNotificationPermissionIfNeeded() {

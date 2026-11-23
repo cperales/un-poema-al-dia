@@ -1,0 +1,74 @@
+Este repositorio contiene dos tipos de material con licencias distintas:
+
+  1. El código fuente (servidor, CLI, infraestructura, app), bajo licencia MIT.
+  2. Los textos de los poemas, que son obras en dominio público. La licencia
+     MIT no se aplica a ellos.
+
+================================================================================
+1. CÓDIGO FUENTE — MIT License
+================================================================================
+
+Copyright (c) 2026 Carlos Perales
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+2. POEMAS — Dominio público
+================================================================================
+
+Solo se incluyen y publican poemas cuyos derechos de explotación han expirado
+en España, según el Texto Refundido de la Ley de Propiedad Intelectual
+(Real Decreto Legislativo 1/1996, TRLPI):
+
+  - Autores fallecidos antes del 7 de diciembre de 1987: la obra está
+    protegida durante la vida del autor y 80 años después de su muerte
+    (disposición transitoria cuarta del TRLPI, que mantiene los plazos de la
+    Ley de Propiedad Intelectual de 1879).
+  - Autores fallecidos a partir del 7 de diciembre de 1987: vida del autor
+    y 70 años (art. 26 TRLPI).
+  - El plazo se cuenta desde el 1 de enero del año siguiente a la muerte del
+    autor (art. 30 TRLPI).
+
+En la práctica, en 2026 solo están en dominio público las obras de autores
+fallecidos en 1945 o antes.
+
+Autores incluidos:
+
+  Autor                    Fallecimiento   Dominio público en España desde
+  ----------------------   -------------   -------------------------------
+  Gustavo Adolfo Bécquer   1870            1951
+  Rosalía de Castro        1885            1966
+  Antonio Machado          1939            2020
+
+El dominio público no extingue los derechos morales. La autoría y la
+integridad de la obra se protegen sin límite de tiempo (arts. 14, 15 y 16
+TRLPI). Quien reutilice estos textos debe citar al autor y no alterar la obra.
+Los textos se han cotejado con ediciones históricas:
+
+  - Bécquer, Rima LIII: Obras, vol. 3 (1885).
+  - Rosalía de Castro, «Las campanas»: En las orillas del Sar (1909).
+  - Machado, «Orillas del Duero»: Soledades, galerías y otros poemas (1919).
+  - Machado, «Retrato» y «Anoche cuando dormía»: texto de es.wikisource.org.
+
+La ortografía se ha modernizado (por ejemplo, «a» en lugar de «á»), pero se
+mantienen las palabras y la puntuación de esas ediciones.
+
+Para añadir un poema hay que comprobar antes que su autor cumple la regla
+anterior. Las obras de autores vivos o fallecidos después de 1945 necesitan
+autorización expresa del titular de los derechos.

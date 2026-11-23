@@ -8,12 +8,15 @@ import java.net.URL
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+data class Poem(val title: String, val author: String, val text: String)
+
 /**
  * Reads the shared "poem of the day" published as today.json by the CDK stack.
+ * It is the app's only source of poems: none are bundled in the APK.
  *
- * The last successful response is cached, so the notification still shows the
- * right poem when the phone is offline. If there is no cached response either,
- * callers fall back to the poems bundled in the APK.
+ * The last successful response is cached, so the app and the notification
+ * still show a poem when the phone is offline. With no network and no cache
+ * (fresh install, offline), there is no poem.
  *
  * All network access is blocking: call these methods from [executor], never
  * from the main thread.
@@ -36,10 +39,6 @@ object TodayRepository {
         }
         return PreferenceManager.getCachedTodayJson(context)?.let(::parsePoem)
     }
-
-    /** Network -> cache -> random bundled poem. Blocking. */
-    fun getBlocking(context: Context): Poem =
-        fetchBlocking(context) ?: PoemLoader.getRandomPoem(context)
 
     private fun fetchFromNetwork(): Pair<Poem, String>? {
         val baseUrl = BuildConfig.TODAY_JSON_URL

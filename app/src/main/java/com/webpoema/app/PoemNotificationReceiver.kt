@@ -22,17 +22,25 @@ class PoemNotificationReceiver : BroadcastReceiver() {
 
         TodayRepository.executor.execute {
             try {
-                val poem = TodayRepository.getBlocking(appContext)
-                showNotification(appContext, poem.title, poem.author, poem.text)
-
-                // Alarms are one-shot: schedule the next one (daily/weekly).
-                val frequency = PreferenceManager.getFrequency(appContext)
-                if (frequency != "never") {
-                    NotificationScheduler.schedule(appContext, frequency)
+                val poem = TodayRepository.fetchBlocking(appContext)
+                if (poem != null) {
+                    showNotification(appContext, poem.title, poem.author, poem.text)
+                } else {
+                    Log.w(TAG, "No poem of the day (offline, nothing cached); skipping")
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Could not show the poem notification", e)
             } finally {
+                // Alarms are one-shot: always schedule the next one (daily/weekly),
+                // even if this one had no poem to show.
+                try {
+                    val frequency = PreferenceManager.getFrequency(appContext)
+                    if (frequency != "never") {
+                        NotificationScheduler.schedule(appContext, frequency)
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Could not re-arm the poem alarm", e)
+                }
                 pendingResult.finish()
             }
         }

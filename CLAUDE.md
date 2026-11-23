@@ -4,17 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Two independent front-ends that show a random poem, sharing one poem collection:
-
-- **Web server** (`app.py`, `webpoem`): Python stdlib only, no dependencies, no tests, no linter.
-- **Android app** (`app/`): Kotlin + Gradle, WebView plus scheduled notifications. No tests.
+Branch `app`: the Android app only (Kotlin + Gradle, WebView plus scheduled notifications, no tests).
+It shows the shared "poem of the day" from the public `today.json` published by the AWS stack on
+branch `pages` (which also holds the web page). The two branches never merge; their only shared
+contract is `today.json` (`{date, id, title, author, text}`) and its URL. The APK bundles **no poems**.
 
 ## Commands
 
 ```bash
-./webpoem start|stop|restart|status   # manage the server (PID in .webpoem/pid, gitignored)
-python app.py --port 8000             # run in the foreground (default port 8000, binds 0.0.0.0)
-./gradlew assembleDebug               # build the APK (needs Android SDK)
+./gradlew assembleDebug               # build the debug APK (needs Android SDK)
 ./gradlew installDebug                # install on a connected device
 ```
 
@@ -26,30 +24,23 @@ JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_HOME=/usr/lib/android-sdk .
 
 (Alternatively create a gitignored `local.properties` with `sdk.dir=/usr/lib/android-sdk` and set only `JAVA_HOME`.)
 
-Python env is managed with `uv` (`uv venv && source .venv/bin/activate`), but nothing needs installing.
+## Release
 
-## Web architecture
+`.github/workflows/release.yml` runs on tags `v*` (cut from `app`): it builds `assembleRelease`
+signed with the release keystore, verifies it with `apksigner`, and attaches it to a GitHub Release.
 
-- `app.py` globs `Poemas/**/*.md` **once at import time** into `POEMS`. Added or removed poems only show up after `./webpoem restart`.
-- Only `GET /` is custom: it picks a random poem and renders it through the inline HTML template in `render_poem`. Every other path falls through to `SimpleHTTPRequestHandler`, which serves static files from the repo root, so the whole repo (including `.git`) is reachable over HTTP.
-- The inline CSS has a `prefers-color-scheme: dark` block (black background, white text), so the page follows the browser/OS theme. Keep it in sync with `app/src/main/assets/index.html`.
-- Poem text is interpolated into the HTML unescaped. The markdown is not parsed, and CSS `white-space: pre-line` preserves the line breaks.
-- Author and title come from the path. The title is the filename without `.md`. The author is every directory component below `Poemas/`. The files are currently nested as `Poemas/Poemas/<Author>/<Title>.md`, so the "author" shown is literally `Poemas/<Author>`.
+- `git tag v1.2.0 app && git push origin v1.2.0`. `versionName` = tag without `v`; `versionCode` = the workflow run number.
+- Secrets: `ANDROID_KEYSTORE_BASE64` (`base64 -w0 release.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+- `app/build.gradle.kts` reads the same names from the environment (`ANDROID_KEYSTORE_PATH` instead of the base64). Without them `assembleRelease` produces an unsigned APK.
+- The keystore must never change: a different key means installed apps cannot update.
 
-## Android architecture (`app/`, package `com.webpoema.app`)
+## Architecture (`app/`, package `com.webpoema.app`)
 
-- **Poem data**: `app/src/main/assets/poems.json` is an array of `{title, author, text}`. It is a committed snapshot of `Poemas/`. AGENTS.md calls it "auto-generated", but **no generator script exists in the repo**. After changing `Poemas/`, regenerate it by hand or write the script. Note that the JSON `author` field has no `Poemas/` prefix, unlike the web server's.
-- **Display**: `MainActivity` is a WebView that loads `https://appassets.androidplatform.net/assets/index.html`, served from `assets/` by `WebViewAssetLoader` (`androidx.webkit`). Do not switch back to `file:///android_asset/`: WebView blocks `fetch()` on `file://` pages, which shows "No se pudieron cargar los poemas." The page fetches `poems.json` and picks a random poem in JS. It also reads `title`/`author`/`text` from the query string if present. Its HTML and CSS are a duplicate of `render_poem` in `app.py`, so keep the two in sync.
+- **Poem source**: `TodayRepository.fetchBlocking` GETs `BuildConfig.TODAY_JSON_URL` (from `todayJsonUrl` in `gradle.properties`, override with `-PtodayJsonUrl=...`), caches the last good body in SharedPreferences, and falls back to that cache. Returns `null` when there is neither (fresh install offline). Blocking: run it on `TodayRepository.executor`.
+- **Display**: `MainActivity` is a WebView that loads `https://appassets.androidplatform.net/assets/index.html`, served from `assets/` by `WebViewAssetLoader` (`androidx.webkit`). Do not switch back to `file:///android_asset/`, which WebView restricts. The page shows «Cargando…» until `MainActivity` calls `window.showPoem(poem)` or `window.showError()` via `evaluateJavascript` (queued in `pendingScript` until the page has loaded). The notification's extras (`show_poem`/`title`/`author`/`text`) are shown directly without fetching.
 - **JS bridge**: `MainActivity` exposes `Android.openSettings()` (`@JavascriptInterface`) to the page. The ⚙ button in `index.html` calls it to start `SettingsActivity`.
-- **Theme**: `Theme.WebPoema` is a Material3 DayNight theme (`res/values/themes.xml`; night variant in `res/values-night/themes.xml`: black background, white primary, black status bar). `WebPoemaApp` (the `Application` class, set in the manifest) applies the saved choice at startup via `AppCompatDelegate.setDefaultNightMode`, and `SettingsActivity` re-applies it on save. The WebView reports `prefers-color-scheme` from the app's night mode, so the `@media (prefers-color-scheme: dark)` block in `index.html` styles the poem page. If the user never chose a theme, the app follows the system.
-- **Settings ("Ajustes")**: `SettingsActivity` has two sections, "Notificaciones" (frequency `never`/`daily`/`weekly`) and "Tema" (`light`/`dark`). Both are stored via `PreferenceManager` (SharedPreferences) and saved together by the Guardar button.
-- **Notifications**: saving calls `NotificationScheduler.schedule`. That cancels the existing alarm, picks a random poem via `PoemLoader`, and sets a single **one-shot** exact alarm (`AlarmManager.setExactAndAllowWhileIdle`) carrying the poem in the intent extras. `PoemNotificationReceiver` posts the notification when it fires.
+- **Theme**: `Theme.WebPoema` is a Material3 DayNight theme (`res/values/themes.xml`; night variant in `res/values-night/themes.xml`). `WebPoemaApp` (the `Application` class) applies the saved choice at startup via `AppCompatDelegate.setDefaultNightMode`, and `SettingsActivity` re-applies it on save. The WebView reports `prefers-color-scheme` from the app's night mode, so the `@media (prefers-color-scheme: dark)` block in `index.html` styles the poem page. The CSS mirrors `web/index.html` on branch `pages`.
+- **Settings ("Ajustes")**: `SettingsActivity` has "Notificaciones" (frequency `never`/`daily`/`weekly`) and "Tema" (`light`/`dark`), stored via `PreferenceManager` (SharedPreferences) and saved together by Guardar.
+- **Notifications**: `NotificationScheduler.schedule` sets a one-shot exact alarm for the next 09:00 local time (Sundays for weekly). `PoemNotificationReceiver` resolves the poem at fire time with `fetchBlocking` (skips the notification if there is none) and always re-arms the next alarm. `BootReceiver` re-arms after reboot, and `MainActivity` reconciles the schedule at launch.
 - Build config: AGP 8.5.0, Kotlin 1.9.22, compile/target SDK 34, min SDK 26, Java 17. The root `build.gradle.kts` uses the legacy `buildscript` classpath style.
-
-### Known gaps in the Android code
-
-These explain behavior that looks broken. Check them before assuming a new bug:
-
-- The alarm is never re-armed after it fires and there is no `BOOT_COMPLETED` receiver, so notifications stop after the first one.
-- `MainActivity` ignores the `show_poem`/`title`/`author`/`text` extras that the notification's PendingIntent sends.
 - `app/src/AndroidManifest.xml` is an empty stub. The real manifest is `app/src/main/AndroidManifest.xml`.

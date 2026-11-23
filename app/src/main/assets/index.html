@@ -61,25 +61,28 @@
 <div class="poem">
   <div class="author" id="author"></div>
   <h1 class="title" id="title"></h1>
-  <div class="text" id="text"></div>
+  <div class="text" id="text">Cargando…</div>
 </div>
 <button class="settings-btn" id="settings">⚙</button>
 
 <script>
-let externalPoem = false;
+let poemShown = false;
 
-function renderPoem(poem) {
+// Called from MainActivity with the shared poem of the day (or the poem the
+// notification showed). textContent, never innerHTML: the poem is data.
+window.showPoem = function(poem) {
   if (!poem) return;
+  poemShown = true;
   document.getElementById('author').textContent = poem.author || '';
   document.getElementById('title').textContent = poem.title || '';
   document.getElementById('text').textContent = poem.text || '';
-}
+};
 
-// Called from MainActivity with the shared poem of the day (or the poem the
-// notification showed). It wins over the bundled fallback below.
-window.showPoem = function(poem) {
-  externalPoem = true;
-  renderPoem(poem);
+// Called from MainActivity when today.json could not be fetched and nothing
+// is cached (e.g. first launch offline). The app bundles no poems.
+window.showError = function() {
+  if (poemShown) return;
+  document.getElementById('text').textContent = 'No se pudo cargar el poema de hoy.';
 };
 
 document.getElementById('settings').addEventListener('click', function() {
@@ -95,23 +98,8 @@ document.getElementById('settings').addEventListener('click', function() {
 
   if (title && text) {
     window.showPoem({ author: author || '', title: title, text: text });
-    return;
   }
-
-  // Show a bundled poem immediately; MainActivity replaces it with the poem
-  // of the day once today.json has been fetched.
-  fetch('poems.json')
-    .then(r => r.json())
-    .then(poems => {
-      if (!externalPoem && poems.length) {
-        renderPoem(poems[Math.floor(Math.random() * poems.length)]);
-      }
-    })
-    .catch(() => {
-      if (!externalPoem) {
-        document.getElementById('text').textContent = 'No se pudieron cargar los poemas.';
-      }
-    });
+  // Otherwise keep «Cargando…» until MainActivity calls showPoem/showError.
 })();
 </script>
 </body>
