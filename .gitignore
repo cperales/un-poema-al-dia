@@ -19,12 +19,11 @@ build/
 .DS_Store
 Thumbs.db
 
-# Webpoem
+# Restos locales de otras ramas (servidor antiguo, Gradle)
 .webpoem/
-
-# Gradle
 .gradle/
 
-# Planes internos y poemas con derechos (no se publican)
+# Planes internos y copias locales de los poemas (viven en S3, no se publican)
 plans/
 Poemas/
+s3-poemas/

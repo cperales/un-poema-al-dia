@@ -1,7 +1,7 @@
 # Poem of the day (AWS)
 
 A Lambda picks one poem per day and publishes it as `today.json`, so the web
-server and the mobile app show the same poem.
+page and the mobile app show the same poem.
 
 ```
 EventBridge Scheduler (00:05 Europe/Madrid) -> Lambda -> <out bucket>/today.json  (public GET)
@@ -22,6 +22,19 @@ poems bucket (private, *.md under POEMS_PREFIX) ---^
 - If a run fails, the previous `today.json` stays. Runs are idempotent: a
   second run on the same day changes nothing.
 
+## Clients
+
+Both clients read `today.json` and nothing else; neither bundles poems:
+
+- **Web page** (`web/` on branch `pages`, published by GitHub Pages): the URL
+  is `TODAY_URL` in `web/app.js`. It shows an error message if the fetch fails.
+- **Android app** (branch `app`): fetched at launch and when a notification
+  fires, and cached for offline use. The URL comes from `todayJsonUrl` in
+  `gradle.properties` (`-PtodayJsonUrl=...` overrides it).
+
+Deploying to another account/region (new `TodayUrl` output)? Update both
+settings and publish a new APK.
+
 ## Deploy
 
 Locally (profile `personal`, us-east-1; the account is already CDK-bootstrapped):
@@ -35,8 +48,8 @@ cdk diff   -c poemsBucket=<bucket with the .md poems>
 cdk deploy -c poemsBucket=<bucket with the .md poems>
 ```
 
-`poemsPrefix` (default `Poemas/`) is the key prefix of the poems; override it
-with `-c poemsPrefix=...`. Account and region come from the environment, so the
+`poemsPrefix` (set to `Poemas/` in `cdk.json`) is the key prefix of the poems;
+override it with `-c poemsPrefix=...`. Account and region come from the environment, so the
 same code works with a profile locally and with OIDC credentials in GitHub
 Actions. The installed `cdk` CLI must be at least as new as `aws-cdk-lib`
 (pinned in `requirements.txt`).
