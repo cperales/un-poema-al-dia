@@ -56,7 +56,9 @@ class PoemOfTheDayStack(Stack):
             "Picker",
             runtime=_lambda.Runtime.PYTHON_3_12,
             handler="poem_of_the_day.handler",
-            code=_lambda.Code.from_asset("lambda"),
+            # Exclude bytecode: running the tests writes lambda/__pycache__, which
+            # would otherwise change the asset hash (and redeploy) for no reason.
+            code=_lambda.Code.from_asset("lambda", exclude=["__pycache__", "*.pyc"]),
             timeout=Duration.seconds(30),
             memory_size=256,
             environment={

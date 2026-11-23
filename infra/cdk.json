@@ -1,6 +1,8 @@
 {
   "app": ".venv/bin/python app.py",
   "context": {
-    "poemsPrefix": "Poemas/"
+    "poemsPrefix": "Poemas/",
+    "githubRepo": "cperales/un-poema-al-dia",
+    "githubBranch": "pages"
   }
 }

@@ -1,0 +1,93 @@
+name: Deploy infra (CDK)
+
+# Tests + synth on every change to infra/; deploys PoemOfTheDay only from `pages`.
+# AWS access is via OIDC (no stored keys): the role is created by the
+# GitHubDeploy stack and only trusts refs/heads/pages of this repo.
+#
+# Repository variables (Settings → Secrets and variables → Actions → Variables):
+#   AWS_DEPLOY_ROLE_ARN  GitHubDeploy's DeployRoleArn output
+#   AWS_REGION           eu-west-3
+#   POEMS_BUCKET         webpoema-<account>-eu-west-3
+on:
+  push:
+    branches: [pages]
+    paths:
+      - "infra/**"
+      - ".github/workflows/deploy-infra.yml"
+  pull_request:
+    branches: [pages]
+    paths:
+      - "infra/**"
+      - ".github/workflows/deploy-infra.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CDK_CLI_VERSION: "2.1126.0" # keep >= aws-cdk-lib in infra/requirements.txt
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Unit tests (no AWS)
+        run: python -m unittest discover tests
+
+      - name: Install CDK app dependencies
+        run: uv venv && uv pip install -r requirements.txt
+
+      - name: Synth (no AWS credentials)
+        run: npx --yes aws-cdk@${CDK_CLI_VERSION} synth --quiet -c poemsBucket=synth-only-placeholder
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/pages' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC token for AWS
+    concurrency:
+      group: deploy-infra
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gh-${{ github.run_id }}
+
+      - name: Install CDK app dependencies
+        run: uv venv && uv pip install -r requirements.txt
+
+      # AWS_REGION (set above) is what the cdk CLI uses; it overwrites
+      # CDK_DEFAULT_REGION/ACCOUNT from the credentials before running app.py.
+      - name: Diff
+        run: npx --yes aws-cdk@${CDK_CLI_VERSION} diff PoemOfTheDay -c poemsBucket=${{ vars.POEMS_BUCKET }}
+
+      - name: Deploy PoemOfTheDay
+        run: npx --yes aws-cdk@${CDK_CLI_VERSION} deploy PoemOfTheDay --require-approval never -c poemsBucket=${{ vars.POEMS_BUCKET }}

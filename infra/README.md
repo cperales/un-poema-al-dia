@@ -37,14 +37,38 @@ settings and publish a new APK.
 
 ## Deploy
 
-Locally (profile `personal`, eu-west-3 Paris; the account is already CDK-bootstrapped there):
+The CDK app has two stacks:
+
+| Stack | What | Deployed by |
+|---|---|---|
+| `PoemOfTheDay` | Lambda, scheduler, out bucket | GitHub Actions on every push to `pages` touching `infra/` |
+| `GitHubDeploy` | OIDC provider + `DeployRole` for GitHub Actions | by hand, only when it changes |
+
+### From GitHub Actions (normal path)
+
+`.github/workflows/deploy-infra.yml` runs the unit tests and a credential-less
+`cdk synth` on pushes and PRs touching `infra/`, then (only on `pages`) assumes
+`DeployRole` via OIDC and runs `cdk deploy PoemOfTheDay`. It can also be started by
+hand from the Actions tab (`workflow_dispatch`). No AWS keys are stored in GitHub;
+it needs these repository **variables**: `AWS_DEPLOY_ROLE_ARN` (the
+`GitHubDeploy.DeployRoleArn` output), `AWS_REGION` (`eu-west-3`) and `POEMS_BUCKET`.
+
+`DeployRole` only trusts `repo:<githubRepo>:ref:refs/heads/<githubBranch>` (context in
+`cdk.json`) and can only assume the CDK bootstrap roles of this account/region. The
+bootstrap execution role has `AdministratorAccess` (CDK default), so anything merged
+into `pages` can change the account through CloudFormation: protect that branch.
+
+### Locally
+
+Profile `personal`, eu-west-3 Paris (the account is already CDK-bootstrapped there):
 
 ```bash
 cd infra
 uv venv && uv pip install -r requirements.txt
 export AWS_PROFILE=personal AWS_REGION=eu-west-3
-cdk diff   -c poemsBucket=webpoema-140874247434-eu-west-3
-cdk deploy -c poemsBucket=webpoema-140874247434-eu-west-3
+cdk diff   --all -c poemsBucket=webpoema-140874247434-eu-west-3
+cdk deploy GitHubDeploy -c poemsBucket=webpoema-140874247434-eu-west-3   # OIDC role
+cdk deploy PoemOfTheDay -c poemsBucket=webpoema-140874247434-eu-west-3   # usually CI's job
 ```
 
 Set the region with **`AWS_REGION`**, not only `CDK_DEFAULT_REGION`: the `cdk` CLI
