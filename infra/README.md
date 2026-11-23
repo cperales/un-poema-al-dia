@@ -53,8 +53,13 @@ hand from the Actions tab (`workflow_dispatch`). No AWS keys are stored in GitHu
 it needs these repository **variables**: `AWS_DEPLOY_ROLE_ARN` (the
 `GitHubDeploy.DeployRoleArn` output), `AWS_REGION` (`eu-west-3`) and `POEMS_BUCKET`.
 
-`DeployRole` only trusts `repo:<githubRepo>:ref:refs/heads/<githubBranch>` (context in
-`cdk.json`) and can only assume the CDK bootstrap roles of this account/region. The
+`DeployRole` only trusts OIDC tokens whose `sub` is
+`<githubSubjectPrefix>:ref:refs/heads/<githubBranch>` (context in `cdk.json`) and can
+only assume the CDK bootstrap roles of this account/region. This repo uses GitHub's
+immutable subject format, so the prefix includes the owner and repo IDs
+(`repo:cperales@17336458/un-poema-al-dia@1460477649`, from
+`gh api repos/{owner}/{repo}/actions/oidc/customization/sub`); a renamed or re-created
+repo will not match. The
 bootstrap execution role has `AdministratorAccess` (CDK default), so anything merged
 into `pages` can change the account through CloudFormation: protect that branch.
 

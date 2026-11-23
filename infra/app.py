@@ -42,6 +42,7 @@ GitHubDeployStack(
     "GitHubDeploy",
     repo=app.node.try_get_context("githubRepo"),
     branch=app.node.try_get_context("githubBranch") or "pages",
+    subject_prefix=app.node.try_get_context("githubSubjectPrefix"),
     env=env,
 )
 

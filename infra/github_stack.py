@@ -13,13 +13,19 @@ class GitHubDeployStack(Stack):
 
     The role can only assume this account's CDK bootstrap roles in this stack's
     region, and only workflows running on `refs/heads/<branch>` of `repo` can
-    assume it. Note that the bootstrap execution role is AdministratorAccess (CDK
+    assume it (matched on the OIDC `sub` claim, see `subject_prefix`). Note that the bootstrap execution role is AdministratorAccess (CDK
     default), so the branch restriction is the real security boundary.
     """
 
     def __init__(self, scope: Construct, construct_id: str, *, repo: str, branch: str,
-                 **kwargs) -> None:
+                 subject_prefix: str | None = None, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+
+        # The token's `sub` starts with this prefix. Repos using GitHub's immutable
+        # subject format get "repo:<owner>@<owner_id>/<repo>@<repo_id>" instead of
+        # "repo:<owner>/<repo>" (see GET /repos/{repo}/actions/oidc/customization/sub,
+        # field sub_claim_prefix).
+        subject_prefix = subject_prefix or f"repo:{repo}"
 
         # One provider per account and URL; native CloudFormation resource (no
         # custom-resource Lambda, no thumbprints needed).
@@ -41,7 +47,7 @@ class GitHubDeployStack(Stack):
                     "StringEquals": {
                         "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
                         "token.actions.githubusercontent.com:sub":
-                            f"repo:{repo}:ref:refs/heads/{branch}",
+                            f"{subject_prefix}:ref:refs/heads/{branch}",
                     },
                 },
             ),
